@@ -1,0 +1,120 @@
+\chapter[Adaptive CFD]{Adaptive Computational Fluid Dynamics with finite elements}
+\label{cha_adaptiveCFD}
+In this chapter I will present the main computational tool in use in our research group, that we call the Direct Finite Elements Simulation method, or DFS for short.
+I will explain what distinguishes DFS from other methods and how it can be much cheaper than what has been seen before.
+DFS is based on the contents of Sections~\ref{sec_cfd}, \ref{sec_fem} and \ref{sec_adaptivity}, hence the title of this chapter is intentionally a blend of the titles of these introductory sections.
+
+\section{Simulation of turbulent flows}
+\label{sec_turbulentFlows}
+DFS is a method, but it also a model.
+As such, its applicability and relevance are not universal but suit some scenarios better than others: one scenario in which DFS works particularly well is that of turbulent flows.
+This is not by chance: laminar (non turbulent) flows are significantly less expensive to compute because the flow field does not develop as many small features as their turbulent counterpart, making it is possible to fully resolve the flow field.
+We call this kind of simulation a Direct Numerical Simulation, or DNS.
+While DNSs give us all the information we want on the flowing fluid, it is not feasible to perform a DNS simulation of a turbulent flow.
+This is because we know from the theory that the smallest scales of a flow field scale as \(Re^{-\frac{3}{4}}\), so for the simulation of the flow past an aeroplane at a realistic Reynolds number of, say, ten millions, we would need an enormous number of degrees of freedom, far more than any supercomputer can currently elaborate.
+
+The question with Computational Fluid Dynamics is then how to efficiently simulate flows at high Reynolds numbers, and DFS is an attempt to answer this question.
+Other notable attempts include Reynolds-Averaged Navier-Stokes equations (RANS), a family of models based on simulating time-averaged flows instead, replacing the nonlinearities in Equation~\eqref{eq_ns} with heavy modelling intervention, and Large-Eddy Simulations, or LES, a family of models that behave like a DNS simulation up to a certain given scale, but do not resolve the smallest scales of the flow, which are replaced by some suitable turbulence model.
+
+RANS simulations are very cheap but their heavy modelling intervention typically results in a number of parameters that should be tuned, or fitted, for most simulation scenarios with little support from a theoretical background.
+LESs, on the other hand, resemble reality much more closely but are more expensive than RANS simulations; in fact, LESs can take days to run on a realistic case, and in many cases they still require parameters to be found and specified.
+
+\section{DFS as a General Galerkin method for turbulent flows}
+\label{sec_G2}
+The DFS method that we use for the simulation of turbulent flows consists of a finite elements method with linear elements for both the velocity and the pressure.
+Recalling Section~\ref{sec_fem}, this means that in our framework both the velocity and the pressure are approximated, on a given mesh, by functions that are globally continuous over the domain and linear over each cell.
+
+Since turbulent flows are \emph{transport-dominated} flows, DFS relies on residual-based least squares stabilisation to avoid unphysical oscillations that would arise by the straightforward application of a FEM solver to Navier-Stokes equations.
+This is a well-known phenomenon in the literature of finite elements simulation of transport phenomena.
+The innovation, here, is that the residual-based stabilisation is also used as a turbulence model.
+This acts in a similar way to how some LES models, called \emph{implicit LES}, handle their subgrid scales.
+
+\subsection{Formulation of DFS}
+\label{sub_dfsFormulation}
+The DFS method is based on linear polynomial finite elements in both time and space; accordingly, the test functions will be continuous, piecewise linear in space, but only piecewise constant in time.
+Let us subdivide the simulation time interval \([0, T]\) in a partition \(0 = t_0 < t_1 < \dots < t_N = T\) of time steps of length \(\Delta t^n = t_{n+1} - t_n\) and let \(\Omega\) be the domain of our simulation, on which we define a finite dimensional space \(W \subset H^1(\Omega)\) of continuous, piecewise linear functions on the mesh \(\mathcal{T}_h\) of mesh size \(h = h(\vec{x})\); furthermore, let \(W_\vec{w}\) be the subset of \(W\) of functions satisfying the Dirichlet boundary condition \(\vec{u}_{\Gamma_D} = \vec{w}\).
+Then the DFS method for the Navier-Stokes equations with homogeneous Dirichlet boundary conditions can be formulated as: for every time step \(n\) find \((\vec{u}_h^n, p_h^n) = (\vec{u}_h(t^n), p_h(t^n)) \in [W_\vec{0}]^3 \times W\) such that
+\begin{multline}
+  \left(\frac{\vec{u}_h^n - \vec{u}_h^{n-1}}{\Delta t^n} + \bar{\vec{u}}_h^n \cdot \grad \bar{\vec{u}}_h^n, \vec{v}_h\right)
+    + \left( 2 \nu \sym\grad(\bar{\vec{u}}_h^n), \sym\grad \vec{v}_h \right) \\
+    - \left( p_h^n, \div \vec{v}_h \right) 
+    + \left( \div \bar{\vec{u}}_h^n, q_h \right) 
+    + SD_\delta^n(\bar{\vec{u}}_h^n, p_h^n; \vec{v}_h, q_h)
+    = \left( \vec{f}, \vec{v}_h) \right) \\
+    \qquad \forall (\vec{v}_h, q_h) \in [W_\vec{0}]^3 \times W.
+  \label{eq_dfs}
+\end{multline}
+In Equation~\eqref{eq_dfs}, \(\bar{\vec{u}}_h^n = \frac{\vec{u}_h^n + \vec{u}_h^{n-1}}{2}\), \(\sym A = \frac{A + A^t}{2}\) is the symmetric part of \(A\), we added the aforementioned stabilisation term
+\begin{multline}
+  SD_\delta^n(\bar{\vec{u}}_h^n, p_h^n; \vec{v}_h, q_h) = \\
+  \left( \delta (\bar{\vec{u}}_h^n \cdot \grad \bar{\vec{u}}_h^n + \grad p_h^n - \vec{f}, \bar{\vec{u}}_h^n \cdot \grad \vec{v}_h + \grad q_h \right) \\
+  + \delta\left(\div \bar{\vec{u}}_h^n, \div \vec{v}_h \right),
+  \label{eq_stab}
+\end{multline}
+\(\left(\cdot, \cdot\right)\) represents the usual inner product, \(\delta = \kappa h\) and \(\kappa\) is a positive constant of unitary size.
+
+\subsection{The infinite Reynolds model}
+\label{sub_infiniteRe}
+The way boundary conditions are modeled in DFS is one of the key contributors, alongside adaptivity, to the exceptionally low cost of a simulation, as compared to, for example, DNSs or LESs.
+In fluid dynamics it is traditionally accepted that the boundary layer plays an important role in the solution to the Navier-Stokes equations, and especially in the computation of aerodynamic forces such as lift and drag.
+
+In high Reynolds flows, the boundary layer originates from the fact that the velocity of the fluid in contact with the body surface is zero, but the velocity far from the boundary can be very high.
+The flow field then has a steep gradient going from zero to its far-field value very sharply.
+On top of it, we know from the theory that the width \(w\) of the boundary layer is proportional to the inverse of the Reynolds number: \(w \sim Re^{-1}\), meaning that for very high Reynolds numbers the boundary layer is extremely thin, so much so that it requires a lot of mesh points near the boundary to accurately be resolved.
+Much of the computational cost of traditional CFD methods lies in the cost of resolving the boundary layer.
+
+In general, the boundary layer is, in fact, important, and the aerodynamic forces on a body, together with the flow features, change with the Reynolds number of the simulation.
+However, experiments have proven that at very high Reynolds number these quantities become insensitive to the Reynolds number: while the lift on a wing, for example, changes greatly when the Reynolds number goes from \num{10} to \num{100000}, it does not change much for Reynolds numbers greater than \num{1e7}.
+The fact that, for very high Reynolds numbers, aerodynamic forces tend to a limit motivates the introduction of an \emph{infinite Reynolds} model of the flow, meaning that we assume the flow, and in particular the aerodynamic forces, to be well approximated by the corresponding quantities computed with an infinite Reynolds number.
+
+In practice, this means that the viscosity \(\nu\) will be set to zero and that the boundary layer thickness will also be zero.
+The latter consequence is the most important one for efficiency: not having a boundary layer to resolve, a lot of computational cost can be saved that would otherwise be spent on resolving it.
+
+The formulation of the boundary condition for our model then reads
+\begin{equation}
+  \vec{u} \cdot \vec{n} = 0 \qquad \text{ on } \Gamma_B
+  \label{eq_slipBC}
+\end{equation}
+with \(\Gamma_B \subset \partial \Omega\) the part of the boundary that covers the surface of the immersed body and  \(\vec{n}\) the unit vector normal to it.
+
+
+\subsubsection{Adaptive error estimation}
+\label{ssub_adaptivity}
+The last ingredient in DFS is adaptive error estimation.
+Once we have a solution to Equation~\eqref{eq_dfs}, we need to decide where to refine the mesh, to prepare for the next iteration.
+To this end, we solve the dual problem of Equation~\eqref{eq_dfs}, as outlined in Section~\ref{sec_adaptivity}.
+I should point out that the Navier-Stokes equations are a nonlinear system; the dual problem is uniquely defined, as in Equation~\eqref{eq_poissonDual}, only for linear equations.
+In this case, one usually takes a linearisation of the initial equation, and uses the dual of that linearised version.
+
+With the numerical solution to the dual problem, call it \((\vec{\phi}_h,\theta_h)\), consisting of the dual velocity and the dual pressure, one can compute an estimate of the error on the computation of a particular quantity of interest \(M(\vec{u}, p)\), such as an aerodynamic force:
+\begin{multline}
+  \abs*{M(\vec{u}, p) - M(\vec{u_h}, p_h)} \le \\
+    \sum_n \left[ \int_{I_n} \sum_{K \in \mathcal{T}_n} \norm*{R_1(\vec{u}_h, p_h)_K \omega_1} 
+      + \abs*{R_2(\vec{u}_h)_K \omega_2} \right. \\
+      \left. \phantom{\sum_K}+ \abs*{SD_\delta(\vec{u}_h, p_h; \vec{\phi}_h, \theta_h)_K} \right].
+  \label{eq_errEst}
+\end{multline}
+In Equation~\eqref{eq_errEst}, \(R_1\) and \(R_2\) are the strong residuals of the mass and momentum equations and
+\begin{equation}
+  \begin{aligned}
+    \omega_1 &= C_1 h_K \norm*{\grad\phi_h}_K \\
+    \omega_2 &= C_2 h_K \norm*{\grad\theta_h}_K
+  \end{aligned}
+  \label{eq_omegas}
+\end{equation}
+with \(C_1\) and \(C_2\) being some interpolation constants.
+
+The DFS adaptive simulation methodology can thus be summarised as follows: given a mesh \(\mathcal{T}_k\),
+\begin{enumerate}
+  \item Solve the Navier-Stokes equations \eqref{eq_dfs}
+  \item Solve the dual problem
+  \item Compute an error estimate with Equation~\eqref{eq_errEst}
+  \item If the estimate is greater than a given tolerance
+    \begin{enumerate}
+      \item refine a fraction of the cells with highers error, generating \(\mathcal{T}_{k+1}\)
+      \item go back to point 1
+    \end{enumerate}
+  \item Terminate the procedure
+\end{enumerate}
+
+This is the other factor that contributes to DFS's great efficiency: with this simulation strategy, starting with a coarse initial mesh, and with the save in computational cost given by using slip boundary conditions to model boundary layers, DFS proved to be much cheaper than traditional methods, allowing to simulate time-dependent turbulent flows and not needing ad-hoc meshing, but rather being able to generate an optimal mesh as the iterative procedure progresses.

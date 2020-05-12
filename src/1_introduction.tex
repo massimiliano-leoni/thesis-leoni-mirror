@@ -1,0 +1,395 @@
+\chapter{Introduction}
+\label{cha_introduction}
+
+I have always been interested in mathematics, and I have always been fascinated by science.
+I find it obvious and surprising, at the same time, that I found myself seizing any opportunity to steer my own research focus in the direction of applications of mathematics to problems in science and technology.
+The field of numerical simulations offers the perfect ground to grow and nurture my passions into real scientific progress, being at the intersection of mathematics, a variety of applied sciences, and computer programming -- a dark art I find difficult to resist.
+This is the gist of this thesis: I will take my reader through advances in simulation technology and applications to a challenging biomedical problem, in an attempt to celebrate how Mathematics truly is \emph{the art of giving the same name to different things}.
+Let us dive in.
+
+Given the wide range of topics this thesis necessarily covers, the present
+chapter briefly recalls the fundamental ideas of the building blocks
+upon which later chapters are built.
+This is intended to give a high-level understanding of the
+concepts to readers coming from different backgrounds and does not aim
+to be a complete introduction to the corresponding topics.
+I assume only basic knowledge of calculus, mechanics and computer
+science on the reader's side.
+
+\section{Fluid dynamics}
+\label{sec_cfd}
+Fluid dynamics is a very vast field.
+With basic ideas going back to Euler, fluid dynamics has since become a
+central part of mechanical, aerospace and civil engineering providing
+useful insight into how to build aeroplanes, cars and bridges but also
+heart valves and nuclear reactors.
+Despite being so important, some questions in fluid mechanics still do not
+have a satisfactory answer, one such example being turbulence, one of the last few
+open problems in classical mechanics that still eludes our
+comprehension.
+Part of the issue is that turbulence, the disordered and chaotic motion that fluids
+undergo when friction between particles dominates their diffusion, is too
+expensive to fully simulate in a computer because the features the flow
+develops are too fine for the resolution power of modern supercomputing
+clusters.
+
+In this context I will only address incompressible, viscous fluid
+dynamics.
+The word \emph{incompressible} refers to the fact that the fluid at hand
+does not show any compressibility effect, meaning that its density
+remains constant in time.
+This is a good approximation for all liquids and for gases under appropriate conditions, such as air at relatively low speeds and Mach number up to \num{0.3}.
+The word \emph{viscous} means that the particles of the fluid do not slip
+past each other frictionlessly, but instead experience friction from each
+other and can drag each other around.
+This is a reasonable assumption for almost all fluids that we encounter
+in engineering practice.
+
+The most famous equations of fluid dynamics are the Navier-Stokes
+equations, a system of two equations encoding conservation of mass and momentum.
+For viscous, incompressible fluids, the former reads
+\begin{equation}
+  \div \vec{u} = 0
+  \label{eq_mass}
+\end{equation}
+while the latter reads
+\begin{equation}
+  \rho\partial_{t} \vec{u} - \mu \Delta \vec{u} + \rho(\vec{u} \cdot \grad)
+  \vec{u} - \grad p = \vec{f}
+  \label{eq_momentum}
+\end{equation}
+where \(\vec{u}\) is the fluid velocity, \(\mu\) is the dynamic
+viscosity, \(p\) is the pressure, \(\rho\) is the density and \(\vec{f}\)
+represents the external forces such as gravity.
+
+The mass conservation equation \eqref{eq_mass} expresses the fact that
+the fluid is incompressible: a zero-divergence velocity field means,
+intuitively, that in any given point as much fluid is arriving as is
+leaving, implying that the total volume of the fluid remains constant.
+The momentum conservation equation \eqref{eq_momentum} is a suitable
+reformulation of Newton's second law that forces \(F\) applied to matter change
+its momentum \(Q\) according to
+\begin{equation}
+  F = \dot Q;
+  \label{eq_newtonSecondLaw}
+\end{equation}
+in the case of Equation~\eqref{eq_momentum}, the momentum is \(\dot
+{\rho \vec{u}} = \rho \partial_{t} \vec{u} + \rho (\vec{u} \cdot \grad)
+\vec{u}\) and the applied forces are \(\div \sigma(\vec{u}, p) = \mu
+\Delta \vec{u} + \grad p + \vec{f}\), where \(\sigma(\vec{u}, p)\) is the
+stress tensor \(\sigma(\vec{u}, p) = 2 \mu \sym\grad \vec{u} - pI\) and \(\sym A = \frac{A + A^t}{2}\) is the symmetric part of \(A\);
+Equation~\eqref{eq_momentum} can then be compactly expressed as
+\begin{equation}
+  \dot {\rho \vec{u}} = \div \sigma(\vec{u}, p),
+  \label{eq_momentumDerivatives}
+\end{equation}
+beautifully expressing how derivatives capture the essence of our world.
+
+For incompressible fluids, where density is constant, it is common to
+normalise the equations choosing a domain of unitary characteristic
+length and a flow of unitary characteristic speed, together with a
+unitary density.
+After these changes of variables, but without changing notation for
+convenience, the equations read
+\begin{equation}
+  \left\{
+    \begin{aligned}
+      &\partial_{t} \vec{u} - \nu \Delta \vec{u} + (\vec{u} \cdot \grad)
+        \vec{u} - \grad p = \vec{f} \\
+      &\div \vec{u} = 0
+    \end{aligned}
+  \right.
+  \label{eq_ns}
+\end{equation}
+where now \(\nu = \frac{\mu}{\rho}\) is the kinematic viscosity and \(p\)
+and \(\vec{f}\) have been implicitly divided by the density.
+The only parameter left, \(\nu\), is the ratio of the dynamic viscosity
+to the density and models the flow based on how strong diffusion effects
+are compared to inertial effects, and it is so important that its inverse
+is given the name of \emph{Reynolds number} \(Re = \nu^{-1}\).
+The Reynolds number, being the only nondimensional group left in
+Equation~\eqref{eq_ns}, determines the features of the resulting
+solution: in a flow with small Reynolds number, particles diffuse much
+faster than they drag each other around, resulting in smooth, laminar
+velocity profiles, whereas in a flow with high Reynolds number the
+opposite happens, and the velocity profile is turbulent and chaotic.
+
+It should be noted that the real definition of the Reynolds number is
+\begin{equation}
+  Re = \frac{LU}{\nu}
+  \label{eq_reynolds}
+\end{equation}
+with \(L\) and \(U\) a characteristic length and speed of the system,
+such as, for example for the case of flow past a wing profile, the wing length and
+the far-field velocity.
+The definition I gave above keeps into account that
+Equation~\eqref{eq_ns} was normalised such that \(L = 1\) and \(U = 1\).
+
+
+\section{Finite elements}
+\label{sec_fem}
+The Finite Elements Method, or FEM for brevity, is a technique to approximate the solution to partial differential equations, or PDEs.
+This method is very popular in many fields of engineering due to its versatility and its ability to gracefully handle complex geometries, typical of practical applications.
+
+I will now briefly illustrate the principles of the Finite Elements Method on the very famous Poisson equation
+\begin{equation}
+  \begin{cases}
+   -\Delta u = f, &\text{ in } \Omega \\
+   u = 0, &\text{ on } \Gamma_D \\
+   \partial_{n} u = 0, &\text{ on } \Gamma_N \\
+  \end{cases}
+  \label{eq_poisson}
+\end{equation}
+where \(\Omega \subset \mathbb{R}^n\) is an open, connected, regular domain, \(\Gamma_D\) and \(\Gamma_N\) are two disjoint subsets of \(\partial \Omega\), such that \(\Gamma_D \cup \Gamma_N = \partial \Omega\), where Dirichlet and Neumann boundary conditions are applied, respectively.
+Here, \(u = u(\vec{x})\) and \(f = f(\vec{x})\) are functions on
+\(\Omega\).
+Considering non-homogeneous Dirichlet and Neumann boundary conditions just adds
+inessential details to the following discussion without changing the
+ideas, so we will not be concerned with it here\footnote{Basically, you
+can reduce non-homogeneous boundary conditions to homogeneous ones by an
+appropriate change of variables.}.
+Finally, \(\Delta = \div \grad\) is the Laplace operator and \(\partial_{n}\) is the normal derivative operator, defined as \(\partial_{n} u = \grad u \cdot \vec{n}\) with \(\vec{n}\) the unit normal.
+
+Some background is required before jumping into the FEM formulation of Equation~\eqref{eq_poisson}.
+Equation~\eqref{eq_poisson}, in its classical interpretation, means that we are looking for a function \(u\) that satisfies it in every point \(\vec{x}\) in the closure of the domain, \(\overline\Omega\).
+Such a function needs to be twice continuously differentiable in \(\Omega\) and continuous up to the boundary, or \(u \in C^2(\Omega) \cap C^0(\overline\Omega)\) for short, otherwise it would not make sense to talk about the Laplacian of \(u\).
+
+This requirement turns out to be too strict for many practical applications, resulting in ill-posed problems, meaning equations that do not have a solution but that describe phenomena that do exist.
+A way to overcome this is to relax the above requirement by choosing a test function \(v\) in an appropriate function space \(X\), multiply Equation~\eqref{eq_poisson} by it and integrate by parts.
+Keeping in mind that, for a scalar function \(w\) and a vector function \(\vec{\psi}\), the Leibniz rule reads
+\begin{equation}
+  \div(w \vec{\psi}) = w \div \vec{\psi} + \vec{\psi} \cdot \grad w
+  \label{eq_leibniz}
+\end{equation}
+and using the Stokes theorem
+\begin{equation}
+  \int_\Omega \div \vec{\psi} = \int_{\partial\Omega} \vec{\psi} \cdot \vec{n}
+  \label{eq_stokes}
+\end{equation}
+Equation~\eqref{eq_poisson} can be rewritten as
+\begin{equation}
+  \int_\Omega \grad u \cdot \grad v = \int_\Omega f v + \int_{\partial\Omega} \partial_{n} u \cdot v.
+  \label{eq_poissonWeakNoBC}
+\end{equation}
+The improvement is that this equation now makes sense under less strict
+conditions, namely that the integrals it features converge.
+We can recover the boundary conditions in Equation~\eqref{eq_poisson} by
+modifying the boundary term in Equation~\eqref{eq_poissonWeakNoBC},
+splitting it into two integrals over \(\Gamma_D\) and \(\Gamma_N\),
+substituting \(\partial_{n} u = 0\) in the latter, which disappears, and requiring the test function \(v\) to
+be zero on \(\Gamma_D\), making the first term disappear as well.
+The final result is
+\begin{equation}
+  \int_\Omega \grad u \cdot \grad v = \int_\Omega f v.
+  \label{eq_poissonWeakNoForall}
+\end{equation}
+We can now claim that a function \(u\) satisfies
+Equation~\eqref{eq_poisson} if it satisfies
+Equation~\eqref{eq_poissonWeakNoForall} for all test functions \(v \in X\).
+This claim is an approximation, which is good only if the chosen space
+\(X\) is sufficiently large.
+We note that the opposite claim is obviously true.
+The choice of \(X\) requires some knowledge of Functional Analysis; in
+this text I will only report that a natural choice is
+\(H^1_{\Gamma_D}(\Omega)\), the set of functions \(u\) that satisfy
+\[
+  \int_\Omega u^2 < +\infty \qquad \text{and} \qquad \int_\Omega \norm*{\grad u}^2 < +\infty
+\]
+and that are zero\footnote{In an appropriate sense.} on \(\Gamma_D\).
+With this choice, it is also natural to look for a solution \(u\) in the
+same space.
+
+We finally have what is called a \emph{weak formulation} of
+Equation~\eqref{eq_poisson}: find \(u \in H^1_{\Gamma_D}(\Omega)\) such
+that
+\begin{equation}
+  \int_\Omega \grad u \cdot \grad v = \int_\Omega f v \qquad \forall v
+  \in H^1_{\Gamma_D}(\Omega).
+  \label{eq_poissonWeak}
+\end{equation}
+The left hand side and the right hand side of Equation~\eqref{eq_poissonWeak} define a
+bilinear form \(a : H^1_{\Gamma_D}(\Omega) \times H^1_{\Gamma_D}(\Omega)
+\mapsto \mathbb{R}\) and a linear form \(L : H^1_{\Gamma_D}(\Omega)
+\mapsto \mathbb{R}\), respectively.
+The equation is often expressed in the more compact form: find \(u \in
+H^1_{\Gamma_D}(\Omega)\) such that
+\begin{equation}
+  a(u, v) = L(v)  \qquad \forall v \in H^1_{\Gamma_D}(\Omega).
+  \label{eq_poissonForms}
+\end{equation}
+
+We are now ready to give a FEM formulation of
+Equation~\eqref{eq_poissonWeak}.
+The idea is to define a finite dimensional approximation of \(X\), which
+is an infinite dimensional space, so that
+we can enter the computation in a computer and get an output.
+Given a simplicial mesh \(\mathcal{T}_h\) -- a mesh made of triangles or tetrahedra --
+describing \(\Omega\), we can use, for example, the space \(V_h =
+\mathbb{P}^1\) of functions
+that are linear on every cell of \(\mathcal{T}_h\) and globally
+continuous (and incorporate the Dirichlet boundary condition).
+The dimension of this space is the number \(N\) of the vertexes in the mesh, so
+it is finite dimensional.
+
+Applying this approximation, our problem now reads: find \(u_h \in V_h\)
+such that
+\begin{equation}
+  \int_{\Omega} \grad u_h \cdot \grad v_h = \int_{\Omega} f v_h \qquad
+  \forall v_h \in V_h
+  \label{eq_poissonGalerkin}
+\end{equation}
+The final step to make the solution computable is to observe that
+Equation~\eqref{eq_poissonGalerkin} is true if and only if it is true for
+a set of functions \(\{\phi_i\}_i\) that form a basis of \(V_h\);
+incidentally, being \(u_h \in V_h\), it can also be expressed as a linear
+combination of the functions \(\{\phi_i\}_i\) with unknown coefficients
+\(\{u_h^i\}_i\), called \emph{degrees of freedom} in this context:
+\[
+  u_h = \sum_{i=1}^N u_h^i \phi_i.
+\]
+Putting it all together, Equation~\eqref{eq_poissonGalerkin} becomes
+\begin{equation}
+  \sum_{i=1}^N u_h^i \int_{\Omega} \grad \phi_i \cdot \grad \phi_j
+  = \int_{\Omega} f \phi_j \qquad
+  \qquad \text{ for } j = 1, 2, \dots, N,
+  \label{eq_poissonFEM}
+\end{equation}
+which can be interpreted as a linear system
+\[
+  A \vec{u} = \vec{b}
+\]
+with
+\[
+  A_{ij} = \int_{\Omega} \grad \phi_i \cdot \grad \phi_j, \qquad
+  \vec{u}_i = u_h^i, \qquad \vec{b}_i = \int_{\Omega} f \phi_i.
+\]
+
+The solution to this linear system contains the coefficients of the
+expansion of the unknown \(u_h\) as a linear combination of basis the
+functions \(\{\phi_i\}_i\), hence the solution to the approximated
+problem.
+
+The above is only a bird's eye view of how the Finite Elements Method is
+used to approximate the solution to PDEs and skips most of the details
+and issues one runs into both on the theoretical side, such as existence,
+uniqueness and stability of a solution, and on the practical side, such
+as conditioning of the linear system.
+
+\section{Goal-oriented mesh adaptivity}
+\label{sec_adaptivity}
+One of the biggest issues one encounters, in the practice of FEM
+simulations, is that the linear system obtained from the spatial
+discretisation can be very big.
+This happens, for example, if the mesh used for the simulation has a lot of cells, or
+if the approximating space contains high-order polynomials,
+both choices that induce a large number of degrees of freedom.
+Our intuition suggests us that, the bigger the number of the degrees of freedom, the
+higher the accuracy of the numerical solution: for an increased cost we
+expect an increased return.
+Unfortunately, this can be taken to a point where the computational cost to solve the
+linear system exceeds that of a regular workstation.
+
+Several approaches are possible to overcome this issue.
+One of them is to run the simulation on a parallel supercomputing
+cluster; this is common practice in modern computational science, but
+even today's gigantic machines struggle to run huge simulations efficiently sometimes.
+This is due to the well known fact that parallel speedup has a
+theoretical bound, meaning that investing twice as many resources does
+not yield twice as much performance.
+As a matter of fact, it yields much less.
+
+This does not at all mean that parallel computing can be disposed of: it
+is, of course, an indispensable tool and our research, and not only ours,
+would be impossible without it.
+What this means is that this approach can greatly benefit from
+integration with other techniques, such as adaptive computations.
+
+The idea behind adaptive computing is that of optimising the number of
+degrees of freedom in order to run a simulation with a target quality
+without spending more than what is necessary to achieve said quality.
+As an example, consider the simulation of flow past a cylinder, a
+classical example in fluid dynamics.
+When it comes to creating a mesh for the domain, a naive approach is to
+fix a maximum size \(h_M\) and make a mesh whose biggest triangle's
+diameter is less than \(h_M\).
+The resulting mesh will have many degrees of freedom close to the
+cylinder, where we \emph{intuitively} expect to see interesting phenomena, and maybe a Von
+Kármán's vortex street, but also many degrees of freedom in areas of the
+domain far from the cylinder, where nothing is happening.
+If we are simulating the flow of, say, water past a pillar holding a
+bridge, we are doing so because we are interested in extracting some
+meaning from the simulation, such as the lift force that water exerts on the
+pillar, to ensure it will not make the structure resonate near its
+characteristic frequency.
+Intuitively, we care about high accuracy in the numerical solution where
+that accuracy pays off in terms of the quantities we are interested in,
+but we care less about all the small eddies far from the pillar.
+It is clear that all degrees of freedom are equal, but some are more
+equal: we would like to only pay for degrees of freedom that actively
+contribute to extracting knowledge from the simulation.
+
+Since the solution is unknown, it is difficult to know where, in the
+domain, more accuracy in the solution will be beneficial.
+One way is to make an educated guess from experience: professionals with
+several years of expertise in simulating a certain class of phenomena
+can, to some extent, guess what parts of a domain are more critical, but
+this is hardly a reliable technique in general and difficult to port from
+one simulation to another.
+
+There is a different approach to mesh adaptivity that relies entirely on
+computation and is one of the main points of the present thesis: \emph{a
+posteriori} adaptivity.
+As the name suggests, this technique extracts information on where to
+refine a mesh from the solution on a previous mesh.
+It is to be used as follows: starting from an initial coarse mesh,
+one can compute a cheap solution, then look at its features and refine
+the mesh where more accuracy is beneficial, then repeat until some criterion
+is satisfied.
+The stopping criterion can be the computational cost, the minimum mesh
+size, or even something more meaningful such as an estimate of the
+approximation error, if available.
+
+In some cases, such as the flow past a cylinder described above, one can
+choose to stop once an estimate of the error on the drag is below a
+certain threshold.
+Clearly, the choice of the criterion profoundly influences
+the adaptivity procedure: trying to minimise the approximation error on
+the solution itself, one goes back to asking for all the eddies, whirls
+and details in the flow field; trying to minimise the error on a specific
+functional, like the lift or the drag, on the other hand, means conceding
+that we accept more error on the solution to the equation where that
+error does not spoil the quantity we are really interested into.
+
+The final piece of the puzzle is how to obtain an error estimate on a
+functional of the solution, such as the drag.
+One way to do it, and the one we use in our flow applications, is based
+on solving the dual problem of the given problem; this technique goes under the
+name of \emph{dual-based} adaptivity.
+The dual problem of Equation~\eqref{eq_poissonForms} features the
+bilinear form \(a^*\) defined by \(a^*(u, v) = a(v, u)\).
+Without going into too much detail, the solution to the dual problem:
+find \(\psi \in X\) such that
+\begin{equation}
+  a^*(\psi, v) = F(v) \qquad \forall v \in X,
+  \label{eq_poissonDual}
+\end{equation}
+where \(X\) is a suitable function space and \(F\) is the cost functional
+(such as the drag), can be used to estimate what cells of a mesh
+contributed the most to the error on \(F\).
+
+The underlying assumption is that it is cheaper to perform \(n\)
+adaptation steps, each at the cost of solving \(2n\) problems on meshes of
+increasing size -- and cost -- rather than solving only one expensive
+problem on a very fine mesh.
+As we will see below, this assumption is often justified in practice.
+
+\section{Software}
+\label{sec_software}
+Software is one of the most important assets in the field of computational mathematics.
+Efficient, scalable software is essential to run huge simulations as the ones described in this work, to leverage the potential of the supercomputing clusters we have today.
+For the work I present in this thesis, I developed software based on FEniCS-HPC, a finite elements framework written in C++ that automates the steps I outlined in Sections~\ref{sec_fem} and \ref{sec_adaptivity}.
+
+For fluid flow I contributed to the development of a solver called Unicorn, written on top of FEniCS-HPC, that we used for the results outlined in Chapter~\ref{cha_hlpw}.
+On the other hand, I also developed, for the purposes detailed in Chapter~\ref{cha_rfa}, a multi-physics simulation program that we internally call \emph{the RFA code}, again on top of FEniCS-HPC and Unicorn, that was essential to the progress of our research.
+
+FEniCS-HPC underwent thorough performance testing in the past and it repeatedly proved to scale with near-ideal performance on thousands of processes.

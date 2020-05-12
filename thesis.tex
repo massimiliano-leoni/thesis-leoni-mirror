@@ -1,0 +1,145 @@
+\documentclass[a4paper,openright]{book}
+
+\usepackage [utf8]{inputenc}
+\usepackage [english]{babel}					%Lingua e sillabazione italiana
+\usepackage {graphicx}						%Immagini
+\usepackage {subfig}
+\usepackage {caption}						%Didascalie
+\usepackage {wrapfig}						%Testo che avvolge un'oggetto
+\usepackage {amsfonts, amsmath, amssymb, esint, mathrsfs}	%Font e simboli matematici
+\usepackage {amsthm}						%Definizioni e teoremi
+\usepackage {mathtools}						%Comandi abs e norm	definiti sotto
+\usepackage {fancyhdr}						%Abstract in {book}
+\usepackage {booktabs}						%Tabelle
+\usepackage {hyperref}						%Collegamenti rossi e verdi
+\usepackage {mhchem}						%Per il typesetting di formule chimiche - comando \ce{formula}
+\usepackage {siunitx}
+\usepackage {pstricks}
+%\usepackage[paperwidth=169mm, paperheight=239mm]{geometry}
+\usepackage[style=authoryear,
+            maxcitenames=1,
+            hyperref,
+            isbn=false,
+            url=false,
+            doi=false,
+            eprint=false,
+            firstinits=true,
+            backend=biber]{biblatex}
+
+%%%%%%%%%%%% Font Alternativi %%%%%%%%%%%%%%%%%%%
+%\usepackage{mathpazo}
+%\usepackage{mathptmx}
+%\usepackage{fourier}
+%\usepackage{pxfonts}
+
+\newcommand{\mail}[1]{\href{mailto:#1}{\texttt{#1}}}
+
+\usepackage {listings}						%Per il codice
+	\lstset {
+		language=C++,
+		inputencoding=utf8,
+		numbers=left,
+		extendedchars=\true,
+		showstringspaces=\false,
+		basicstyle=\small\ttfamily,
+		keywordstyle=\color{darkgreen}\bfseries,
+		commentstyle=\color{blue},
+		stringstyle=\color{fuxia},
+	}
+
+\usepackage {color}							%Definire colori
+	\ifx\color@rgb\@undefined\else
+		\definecolor{darkgreen}{rgb}{0,0.55,0}
+		\definecolor{fuxia}{rgb}{1,0,0.98}
+	\fi
+
+
+
+\makeatletter								%Gestione dei bookmark nel pdf
+\newcommand\deftoclevel[2][chapter]{%
+\expandafter\renewcommand\csname toclevel@#1\endcsname{#2}}
+\makeatother		%il comando \deftoclevel{-1} riporta il bookmark fuori di un livello
+
+% \usepackage {fancyhdr}						%Testatine ed Abstract in {book} come nella tesi liceo
+% \fancyhf{}
+% \fancyhead[RO,LE]{\thepage}
+% \fancyhead[LO]{\nouppercase{\slshape\rightmark}}
+% \fancyhead[RE]{\nouppercase{\slshape\leftmark}}
+% \pagestyle{fancy}
+% \setlength{\headheight}{13.6pt}
+
+\renewcommand{\epsilon}{\varepsilon}		%Definizione delle lettere greche per la tipografia italiana
+\renewcommand{\theta}{\vartheta}
+%\renewcommand{\rho}{\varrho}
+\renewcommand{\phi}{\varphi}
+
+\DeclareMathOperator{\NN}{\mathbb{N}}
+\DeclareMathOperator{\RR}{\mathbb{R}}
+\DeclareMathOperator*\argmin{arg\,min}
+\DeclareMathOperator*\argmax{arg\,max}
+\DeclareMathOperator\tr{tr}
+\DeclareMathOperator\sym{sym}
+\DeclareMathOperator\skw{skw}
+%\DeclareMathOperator\grad{grad}
+\DeclareMathOperator\grad{\nabla}
+\DeclareMathOperator\rot{rot}
+\DeclareMathOperator\curl{curl}
+\DeclareMathOperator\divergence{div}
+\renewcommand{\div}{\divergence}
+
+\def\d{\,\,\textrm{d}}				%il differenziale in testo dritto
+
+
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+
+%\def\wto{\overset{w}{\to}}
+\def\wto{\rightharpoonup}
+\def\vec{}
+\def\vec{\mathbf}
+
+\relpenalty=9999				%evita che le formule inline siano spezzate da fineriga QUASI sempre
+\binoppenalty=9999				%impostare a 10000 per evitare SEMPRE
+
+\newcommand{\<}{\langle}
+\renewcommand{\>}{\rangle}
+
+\theoremstyle{definition}					%Dichiarazione di teoremi e definizioni
+\newtheorem{definizione}{Definizione}
+
+\theoremstyle{plain}
+\newtheorem{teorema}{Teorema}
+\newtheorem*{teorema_bis} {Teorema}
+\newtheorem{proposizione}{Proposizione}
+
+\addbibresource{/home/mleoni/Papers/library.bib}
+
+\graphicspath{{img/rfa/}}
+
+\title{Finite elements simulation of turbulent flows: computations and
+applications}
+\author{Massimiliano Leoni}
+\date{}
+
+\begin{document}
+
+  \frontmatter
+  \maketitle
+
+  \tableofcontents
+
+  \mainmatter
+
+  \part{Introductory chapters}
+  \input{src/1_introduction}
+  \input{src/2_adaptive}
+  \input{src/3_hlpw3}
+  \input{src/4_cloud}
+  \input{src/5_rfa}
+
+  \part{Papers}
+
+  \backmatter
+  \printbibliography[heading=bibintoc]
+
+\end{document}
