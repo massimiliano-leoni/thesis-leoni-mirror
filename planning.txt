@@ -1,0 +1,15 @@
+Planning for PhD thesis of Massimiliano Leoni
+===
+
+Main supervisor: Johan Jansson
+
+This repo:
+
+https://gitlab.bcamath.org/mleoni/phd-thesis
+
+
+
+Guidelines KTH:
+
+https://intra.kth.se/en/eecs/forskarutbildning/public-defence-of-doctoral-thesis-1.813458
+
