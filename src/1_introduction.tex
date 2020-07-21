@@ -16,8 +16,22 @@ to be a complete introduction to the corresponding topics.
 I assume only basic knowledge of calculus, mechanics and computer
 science on the reader's side.
 
-\section{Fluid dynamics}
+\section{Real Unified Continuum Simulation: predictive fluid and solid dynamics}
 \label{sec_cfd}
+The two key scientific frameworks which enable the breakthrough
+results in the thesis are: Digital Math [ref] and Real Unified Continuum
+Simulation (RUC) [ref]. Digital Math is the foundation of modern
+science based on constructive digital mathematical computation, where
+the source code in FEniCS symbolic form and computational results are
+digital scientific objects - allowing reproducibility and
+falsifiability. Real Unified Continuum Simulation is a Direct FEM
+Simulation of first principles allowing general phenomena such as
+multiphase fluid-structure interaction (FSI), general interface
+motion, implicit contact, fracture, plasticity, etc., The methodology
+also allows application of Direct duality-based adaptive error
+control. RUC is a generalization of the Unified Continuum framework
+which was developed previously in [ref].
+
 Fluid dynamics is a very vast field.
 With basic ideas going back to Euler, fluid dynamics has since become a
 central part of mechanical, aerospace and civil engineering providing
@@ -389,7 +403,7 @@ Software is one of the most important assets in the field of computational mathe
 Efficient, scalable software is essential to run huge simulations as the ones described in this work, to leverage the potential of the supercomputing clusters we have today.
 For the work I present in this thesis, I developed software based on FEniCS-HPC, a finite elements framework written in C++ that automates the steps I outlined in Sections~\ref{sec_fem} and \ref{sec_adaptivity}.
 
-For fluid flow I contributed to the development of a solver called Unicorn, written on top of FEniCS-HPC, that we used for the results outlined in Chapter~\ref{cha_hlpw}.
+For fluid flow and RUC I contributed to the development of a solver called Unicorn, written on top of FEniCS-HPC, that we used for the results outlined in Chapter~\ref{cha_hlpw}.
 On the other hand, I also developed, for the purposes detailed in Chapter~\ref{cha_rfa}, a multi-physics simulation program that we internally call \emph{the RFA code}, again on top of FEniCS-HPC and Unicorn, that was essential to the progress of our research.
 
 FEniCS-HPC underwent thorough performance testing in the past and it repeatedly proved to scale with near-ideal performance on thousands of processes.

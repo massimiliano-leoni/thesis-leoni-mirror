@@ -35,18 +35,27 @@
 \newcommand{\mail}[1]{\href{mailto:#1}{\texttt{#1}}}
 
 \usepackage {listings}						%Per il codice
-	\lstset {
-		language=C++,
-		inputencoding=utf8,
-		numbers=left,
-		extendedchars=\true,
-		showstringspaces=\false,
-		basicstyle=\small\ttfamily,
-		keywordstyle=\color{darkgreen}\bfseries,
-		commentstyle=\color{blue},
-		stringstyle=\color{fuxia},
-	}
 
+\lstset{language=Python,frame=ltrb,framesep=5pt,basicstyle=\scriptsize,
+ keywordstyle=\ttfamily\color{darkgreen},
+ identifierstyle=\ttfamily\color{blue}\bfseries, 
+ commentstyle=\color{blue},
+ stringstyle=\ttfamily,
+ showstringspaces=true}
+
+%\usepackage {listings}						%Per il codice
+%	\lstset {
+%		language=C++,
+%		inputencoding=utf8,
+%		numbers=left,
+%		extendedchars=\true,
+%		showstringspaces=\false,
+%		basicstyle=\footnotesize\ttfamily,
+%		keywordstyle=\color{darkgreen}\bfseries,
+%		commentstyle=\color{blue},
+%		stringstyle=\color{fuxia},
+%	}
+        
 \usepackage {color}							%Definire colori
 	\ifx\color@rgb\@undefined\else
 		\definecolor{darkgreen}{rgb}{0,0.55,0}
@@ -135,7 +144,7 @@ applications}
   \input{src/2_adaptive}
   \input{src/3_hlpw3}
   \input{src/4_cloud}
-  \input{src/5_rfa}
+  \input{src/5_biomechanics}
 
   \part{Papers}
 
